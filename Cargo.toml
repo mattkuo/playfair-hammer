@@ -1,0 +1,6 @@
+[package]
+name = "playfair-hammer"
+version = "0.1.0"
+authors = ["Matthew Kuo <matthewkuo92@gmail.com>"]
+
+[dependencies]
