@@ -1,4 +1,4 @@
-mod parser;
+mod scoring;
 
 fn main() {
     println!("Hello, world!");
