@@ -1,3 +1,7 @@
+extern crate rand;
+use rand::distributions::{IndependentSample, Range};
+use rand::Rng;
+
 pub type CipherKey = [[char; 5]; 5];
 
 pub struct Playfair {
@@ -29,11 +33,77 @@ impl Playfair {
         return deciphered_text;
     }
 
+    // TODO: Refactor random functions in swapping helpers
+    pub fn rand_modify_key(&mut self) {
+        let prob = rand::thread_rng().gen_range(0, 100);
+        match prob {
+            0..2 => self.swap_cols(),
+            2..4 => self.swap_rows(),
+            _ => self.swap_letters()
+        };
+    }
+
+    pub fn get_key(&self) -> CipherKey {
+        return self.key;
+    }
+
+    fn swap_letters(&mut self) {
+        let between = Range::new(0, self.key.len());
+        let mut rng = rand::thread_rng();
+
+        let index_a = (between.ind_sample(&mut rng), between.ind_sample(&mut rng));
+        let mut index_b = (between.ind_sample(&mut rng), between.ind_sample(&mut rng));
+
+        while index_b == index_a {
+            index_b = (between.ind_sample(&mut rng), between.ind_sample(&mut rng));
+        }
+
+        let temp_a = self.key[index_a.0][index_a.1];
+        self.key[index_a.0][index_a.1] = self.key[index_b.0][index_b.1];
+        self.key[index_b.0][index_b.1] = temp_a;
+    }
+
+    fn swap_rows(&mut self) {
+        let between = Range::new(0, self.key.len());
+        let mut rng = rand::thread_rng();
+
+        let row_a = between.ind_sample(&mut rng);
+        let mut row_b = between.ind_sample(&mut rng);
+
+        while row_b == index_a {
+            row_b = between.ind_sample(&mut rng);
+        }
+
+        for index in 0..self.key.len() {
+            let temp_a = self.key[row_a][index];
+            self.key[row_a][index] = self.key[row_b][index];
+            self.key[row_b][index] = temp_a;
+        }
+    }
+
+    fn swap_cols(&mut self) {
+        let between = Range::new(0, self.key.len());
+        let mut rng = rand::thread_rng();
+
+        let col_a = between.ind_sample(&mut rng);
+        let mut col_b = between.ind_sample(&mut rng);
+
+        while col_b == col_a {
+            col_b = between.ind_sample(&mut rng);
+        }
+
+        for index in 0..self.key.len() {
+            let temp_a = self.key[index][col_a];
+            self.key[index][col_a] = self.key[index][col_b];
+            self.key[index][col_b] = temp_a;
+        }
+    }
+
     fn decipher_digram(&self, digram: &str) -> String {
         let key:CipherKey = self.key;
         let mut chars_iter = digram.chars();
-        let (a_row, a_col) = self.get_index_of_letter(chars_iter.next().unwrap());
-        let (b_row, b_col) = self.get_index_of_letter(chars_iter.next().unwrap());
+        let (a_row, a_col) = self.get_letter_key_index(chars_iter.next().unwrap());
+        let (b_row, b_col) = self.get_letter_key_index(chars_iter.next().unwrap());
 
         let mut digram = String::new();
         let last_index = key.len() - 1;
@@ -52,7 +122,7 @@ impl Playfair {
         return digram;
     }
 
-    fn get_index_of_letter(&self, letter: char) -> (usize, usize) {
+    fn get_letter_key_index(&self, letter: char) -> (usize, usize) {
         let key:CipherKey = self.key;
         let (mut x, mut y) = (0, 0);
 
