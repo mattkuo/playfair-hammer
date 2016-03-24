@@ -39,9 +39,11 @@ impl Playfair {
     pub fn rand_modify_key(&mut self, rng: &mut ThreadRng) {
         let prob = rng.gen_range(1, 51);
         match prob {
-            0...2 => self.swap_cols(rng),
-            2...4 => self.swap_rows(rng),
-            4...5 => self.swap_row_col(),
+            1 => self.swap_cols(rng),
+            2 => self.swap_rows(rng),
+            3 => self.swap_axis(),
+            4 => self.swap_top_bottom(),
+            5 => self.swap_left_right(),
             _ => self.swap_letters(rng)
         };
     }
@@ -93,12 +95,34 @@ impl Playfair {
         }
     }
 
-    fn swap_row_col(&mut self) {
+    fn swap_axis(&mut self) {
         for i in 0..self.key.len() - 1 {
             for j in i + 1..self.key.len() {
                 let temp = self.key[i][j];
                 self.key[i][j] = self.key[j][i];
                 self.key[j][i] = temp;
+            }
+        }
+    }
+
+    fn swap_top_bottom(&mut self) {
+        for i in 0..self.key.len() / 2 {
+            let bot = self.key.len() - i - 1;
+            for j in 0..self.key.len() {
+                let temp = self.key[i][j];
+                self.key[i][j] = self.key[bot][j];
+                self.key[bot][j] = temp;
+            }
+        }
+    }
+
+    fn swap_left_right(&mut self) {
+        for i in 0..self.key.len() / 2 {
+            let right = self.key.len() - i - 1;
+            for j in 0..self.key.len() {
+                let temp = self.key[j][i];
+                self.key[j][i] = self.key[j][right];
+                self.key[j][right] = temp;
             }
         }
     }
