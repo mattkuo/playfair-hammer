@@ -37,8 +37,9 @@ impl Playfair {
     pub fn rand_modify_key(&mut self) {
         let prob = rand::thread_rng().gen_range(0, 100);
         match prob {
-            0..2 => self.swap_cols(),
-            2..4 => self.swap_rows(),
+            0...2 => self.swap_cols(),
+            2...4 => self.swap_rows(),
+            4...5 => self.swap_row_col(),
             _ => self.swap_letters()
         };
     }
@@ -70,7 +71,7 @@ impl Playfair {
         let row_a = between.ind_sample(&mut rng);
         let mut row_b = between.ind_sample(&mut rng);
 
-        while row_b == index_a {
+        while row_b == row_a {
             row_b = between.ind_sample(&mut rng);
         }
 
@@ -96,6 +97,16 @@ impl Playfair {
             let temp_a = self.key[index][col_a];
             self.key[index][col_a] = self.key[index][col_b];
             self.key[index][col_b] = temp_a;
+        }
+    }
+
+    fn swap_row_col(&mut self) {
+        for i in 0..self.key.len() - 1 {
+            for j in i + 1..self.key.len() {
+                let temp = self.key[i][j];
+                self.key[i][j] = self.key[j][i];
+                self.key[j][i] = temp;
+            }
         }
     }
 
