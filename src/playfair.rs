@@ -12,11 +12,11 @@ impl Playfair {
 
     pub fn new() -> Playfair {
         Playfair {
-            key: [['a', 'b', 'c', 'd', 'e'],
-                  ['f', 'g', 'h', 'i', 'k'],
-                  ['l', 'm', 'n', 'o', 'p'],
-                  ['q', 'r', 's', 't', 'u'],
-                  ['v', 'w', 'x', 'y', 'z']]
+            key: [['A', 'B', 'C', 'D', 'E'],
+                  ['F', 'G', 'H', 'I', 'K'],
+                  ['L', 'M', 'N', 'O', 'P'],
+                  ['Q', 'R', 'S', 'T', 'U'],
+                  ['V', 'W', 'X', 'Y', 'Z']]
         }
     }
 
@@ -124,7 +124,7 @@ impl Playfair {
             digram.push(if b_col == 0 { key[b_row][last_index] } else { key[b_row][b_col - 1]});
         } else if a_col == b_col {
             digram.push(if a_row == 0 { key[last_index][a_col] } else { key[a_row - 1][a_col]});
-            digram.push(if b_col == 0 { key[last_index][b_col] } else { key[b_row - 1][b_col]});
+            digram.push(if b_row == 0 { key[last_index][b_col] } else { key[b_row - 1][b_col]});
         } else {
             digram.push(key[a_row][b_col]);
             digram.push(key[b_row][a_col]);
