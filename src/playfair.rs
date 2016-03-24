@@ -1,11 +1,12 @@
 extern crate rand;
 use rand::distributions::{IndependentSample, Range};
-use rand::Rng;
+use rand::{Rng, ThreadRng};
 
 pub type CipherKey = [[char; 5]; 5];
 
 pub struct Playfair {
-    key: CipherKey
+    key: CipherKey,
+    range: Range<usize>
 }
 
 impl Playfair {
@@ -16,12 +17,13 @@ impl Playfair {
                   ['F', 'G', 'H', 'I', 'K'],
                   ['L', 'M', 'N', 'O', 'P'],
                   ['Q', 'R', 'S', 'T', 'U'],
-                  ['V', 'W', 'X', 'Y', 'Z']]
+                  ['V', 'W', 'X', 'Y', 'Z']],
+            range: Range::new(0, 5)
         }
     }
 
     pub fn decipher(&self, cipher: &str) -> String {
-        let mut deciphered_text = String::new();
+        let mut deciphered_text = String::with_capacity(cipher.len());
 
         let mut index = 0;
         while index < cipher.len() {
@@ -34,13 +36,13 @@ impl Playfair {
     }
 
     // TODO: Refactor random functions in swapping helpers
-    pub fn rand_modify_key(&mut self) {
-        let prob = rand::thread_rng().gen_range(0, 100);
+    pub fn rand_modify_key(&mut self, rng: &mut ThreadRng) {
+        let prob = rng.gen_range(1, 51);
         match prob {
-            0...2 => self.swap_cols(),
-            2...4 => self.swap_rows(),
+            0...2 => self.swap_cols(rng),
+            2...4 => self.swap_rows(rng),
             4...5 => self.swap_row_col(),
-            _ => self.swap_letters()
+            _ => self.swap_letters(rng)
         };
     }
 
@@ -48,15 +50,12 @@ impl Playfair {
         return self.key;
     }
 
-    fn swap_letters(&mut self) {
-        let between = Range::new(0, self.key.len());
-        let mut rng = rand::thread_rng();
-
-        let index_a = (between.ind_sample(&mut rng), between.ind_sample(&mut rng));
-        let mut index_b = (between.ind_sample(&mut rng), between.ind_sample(&mut rng));
+    fn swap_letters(&mut self, rng: &mut ThreadRng) {
+        let index_a = (self.range.ind_sample(rng), self.range.ind_sample(rng));
+        let mut index_b = (self.range.ind_sample(rng), self.range.ind_sample(rng));
 
         while index_b == index_a {
-            index_b = (between.ind_sample(&mut rng), between.ind_sample(&mut rng));
+            index_b = (self.range.ind_sample(rng), self.range.ind_sample(rng));
         }
 
         let temp_a = self.key[index_a.0][index_a.1];
@@ -64,15 +63,12 @@ impl Playfair {
         self.key[index_b.0][index_b.1] = temp_a;
     }
 
-    fn swap_rows(&mut self) {
-        let between = Range::new(0, self.key.len());
-        let mut rng = rand::thread_rng();
-
-        let row_a = between.ind_sample(&mut rng);
-        let mut row_b = between.ind_sample(&mut rng);
+    fn swap_rows(&mut self, rng: &mut ThreadRng) {
+        let row_a = self.range.ind_sample(rng);
+        let mut row_b = self.range.ind_sample(rng);
 
         while row_b == row_a {
-            row_b = between.ind_sample(&mut rng);
+            row_b = self.range.ind_sample(rng);
         }
 
         for index in 0..self.key.len() {
@@ -82,15 +78,12 @@ impl Playfair {
         }
     }
 
-    fn swap_cols(&mut self) {
-        let between = Range::new(0, self.key.len());
-        let mut rng = rand::thread_rng();
-
-        let col_a = between.ind_sample(&mut rng);
-        let mut col_b = between.ind_sample(&mut rng);
+    fn swap_cols(&mut self, rng: &mut ThreadRng) {
+        let col_a = self.range.ind_sample(rng);
+        let mut col_b = self.range.ind_sample(rng);
 
         while col_b == col_a {
-            col_b = between.ind_sample(&mut rng);
+            col_b = self.range.ind_sample(rng);
         }
 
         for index in 0..self.key.len() {
@@ -116,7 +109,7 @@ impl Playfair {
         let (a_row, a_col) = self.get_letter_key_index(chars_iter.next().unwrap());
         let (b_row, b_col) = self.get_letter_key_index(chars_iter.next().unwrap());
 
-        let mut digram = String::new();
+        let mut digram = String::with_capacity(2);
         let last_index = key.len() - 1;
 
         if a_row == b_row {
@@ -159,8 +152,8 @@ mod tests {
     #[test]
     fn test_decipher() {
         let playfair = Playfair::new();
-        let test_str = "sihthtdqcusy";
-        let deciphered = playfair.decipher(test_str);
-        assert_eq!(deciphered, "thisisatestx");
+        let test_str = "sihthtdqcusy".to_uppercase();
+        let deciphered = playfair.decipher(&test_str);
+        assert_eq!(deciphered, "THISISATESTX");
     }
 }

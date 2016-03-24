@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use rand::{thread_rng, Rng};
 use playfair::{Playfair};
 
-const START_TEMP: f64 = 20.0f64;
+const START_TEMP: f64 = 10.0f64;
 const DELTA_TEMP: f64 = 0.2f64;
 const CYCLE_SIZE: u32 = 10_000;
 
@@ -33,8 +33,8 @@ fn main() {
     let mut rng = thread_rng();
 
     while temp >= 0.0 {
-        for cycle in 0..CYCLE_SIZE {
-            playfair.rand_modify_key();
+        for _ in 0..CYCLE_SIZE {
+            playfair.rand_modify_key(&mut rng);
             deciphered = playfair.decipher(&cipher);
             let current_fitness = scoring::get_text_score(&deciphered, 4, &map);
             let delta_fitness = current_fitness - local_best_fitness;
@@ -44,7 +44,9 @@ fn main() {
                 local_best_key = playfair.get_key();
             } else {
                 let prob = (delta_fitness / temp).exp();
-                if prob > rng.next_f64() {
+                let rng_prob = rng.next_f64();
+                if prob > rng_prob {
+                    println!("Accepted less-fit child. Prob: {:?}, Rng: {}", prob, rng_prob);
                     local_best_fitness = current_fitness;
                     local_best_key = playfair.get_key();
                 }
