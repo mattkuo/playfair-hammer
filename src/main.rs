@@ -32,7 +32,9 @@ fn main() {
     let mut rng = thread_rng();
 
     while temp >= 0.0 {
-        for _ in 0..CYCLE_SIZE {
+        let mut counter = 0;
+        let mut less_fit_count = 0;
+        while counter < CYCLE_SIZE {
             playfair.rand_modify_key(&mut rng);
             deciphered = playfair.decipher(&cipher);
             let current_fitness = scoring::get_text_score(&deciphered, 4, &map);
@@ -47,6 +49,10 @@ fn main() {
                 if prob > rng_prob {
                     local_best_fitness = current_fitness;
                     local_best_key = playfair.get_key();
+                    less_fit_count += 1;
+                } else {
+                    playfair.set_key(local_best_key);
+                    counter += 1;
                 }
             }
 
@@ -61,7 +67,7 @@ fn main() {
         }
 
         temp -= DELTA_TEMP;
-        println!("Cooling: {:?}", temp);
+        println!("Cooling: {:?}. Less fit children chosen: {}", temp, less_fit_count);
     }
 
 }

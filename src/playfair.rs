@@ -52,6 +52,10 @@ impl Playfair {
         return self.key;
     }
 
+    pub fn set_key(&mut self, new_key: CipherKey) {
+        self.key = new_key;
+    }
+
     fn swap_letters(&mut self, rng: &mut ThreadRng) {
         let index_a = (self.range.ind_sample(rng), self.range.ind_sample(rng));
         let mut index_b = (self.range.ind_sample(rng), self.range.ind_sample(rng));

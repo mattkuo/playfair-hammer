@@ -21,7 +21,7 @@ pub fn read_ngram(path: &str) -> Result<HashMap<String, f64>, io::Error> {
 
         let amount: f64 = match text.parse() {
             Ok(result) => result,
-            Err(_) => return Err(Error::new(ErrorKind::InvalidData, "Not an int"))
+            Err(_) => return Err(Error::new(ErrorKind::InvalidData, "Not a f64"))
         };
 
         total += amount as f64;
