@@ -1,23 +1,64 @@
 extern crate rand;
-
 mod scoring;
 mod playfair;
 
 use std::collections::HashMap;
+use std::env;
+use std::io::{self};
+use std::io::prelude::*;
+use std::fs::File;
+use std::path::Path;
 use rand::{thread_rng, Rng};
+
 use playfair::{Playfair};
 
 const DELTA_TEMP: f64 = 1.0f64;
 const CYCLE_SIZE: u32 = 50_000;
 
+fn get_cipher() -> Result<String, &'static str>  {
+    let args: Vec<String> = env::args().collect();
+    let mut cipher = String::new();
+
+    if args.len() > 2 {
+        let mut stderr = std::io::stderr();
+        writeln!(&mut stderr, "usage: {:?} [cipher_file]", args[0]).unwrap();
+        return Err("Invalid number of arguments");
+    } else if args.len() == 2 {
+        let path = Path::new(&args[1]);
+        let mut file = match File::open(&path) {
+            Ok(f) => f,
+            Err(_) => return Err("Could not open cipher file")
+        };
+
+        match file.read_to_string(&mut cipher) {
+            Ok(_) => return Ok(cipher),
+            Err(_) => return Err("Failed to read cipher file")
+        };
+    } else {
+        match io::stdin().read_line(&mut cipher) {
+            Ok(_) => return Ok(cipher),
+            Err(_) => return Err("Failed to read cipher")
+        };
+    }
+}
+
 fn main() {
 
+    let mut stderr = std::io::stderr();
     let map: HashMap<String, f64> = match scoring::read_ngram("./ngrams/quadgrams.txt") {
         Ok(m) => m,
         Err(err) => panic!("Failed to parse ngram file: {:?}", err)
     };
 
-    let cipher = "LBINBCRBMOFWFDOFTKOCQUEOKOAWEORMFOTKOCREXVBTIVPLRBOIOANQEADMFTNQNROZFOFOFMHTCMREAEKMMEOMOCWAOTMFNVKOEOFOFOFMHTCMREOFMFCVQCBKMNRB";
+    let cipher = match get_cipher() {
+        Ok(result) => result,
+        Err(msg) => {
+            writeln!(&mut stderr, "Error: {}", msg).unwrap();
+            return;
+        }
+    };
+
+    let cipher = cipher.trim();
 
     let mut playfair = Playfair::new();
     let mut deciphered = playfair.decipher(&cipher);
