@@ -17,13 +17,15 @@ const CYCLE_SIZE: u32 = 50_000;
 
 fn get_cipher() -> Result<String, &'static str>  {
     let args: Vec<String> = env::args().collect();
-    let mut cipher = String::new();
 
     if args.len() > 2 {
         let mut stderr = std::io::stderr();
         writeln!(&mut stderr, "usage: {:?} [cipher_file]", args[0]).unwrap();
         return Err("Invalid number of arguments");
-    } else if args.len() == 2 {
+    }
+
+    let mut cipher = String::new();
+    if args.len() == 2 {
         let path = Path::new(&args[1]);
         let mut file = match File::open(&path) {
             Ok(f) => f,
@@ -47,7 +49,10 @@ fn main() {
     let mut stderr = std::io::stderr();
     let map: HashMap<String, f64> = match scoring::read_ngram("./ngrams/quadgrams.txt") {
         Ok(m) => m,
-        Err(err) => panic!("Failed to parse ngram file: {:?}", err)
+        Err(msg) => {
+            writeln!(&mut stderr, "Error: {}", msg).unwrap();
+            return;
+        }
     };
 
     let cipher = match get_cipher() {
@@ -58,7 +63,12 @@ fn main() {
         }
     };
 
-    let cipher = cipher.trim();
+    let cipher = cipher.trim().to_uppercase().replace(" ", "").replace("\n", "");
+
+    if cipher.len() % 2 != 0 {
+        writeln!(&mut stderr, "Error: Invalid ciphertext").unwrap();
+        return;
+    }
 
     let mut playfair = Playfair::new();
     let mut deciphered = playfair.decipher(&cipher);
@@ -69,10 +79,10 @@ fn main() {
     let mut best_key = playfair.get_key();
     let mut local_best_key = best_key;
 
-    let mut temp = 10.0 + 0.087 * (cipher.len() - 84) as f64;
+    let mut temp = (10.0 + 0.087 * (cipher.len() as f64 - 84f64)).ceil();
     let mut rng = thread_rng();
 
-    while temp >= 0.0 {
+    while temp > 0.0 {
         let mut counter = 0;
         let mut less_fit_count = 0;
         while counter < CYCLE_SIZE {
@@ -100,15 +110,15 @@ fn main() {
             if local_best_fitness > best_fitness {
                 best_fitness = local_best_fitness;
                 best_key = local_best_key;
-                println!("Current Temp: {:?}", temp);
+                println!("Current temperature: {:?}", temp);
                 println!("Best fitness: {:?}", best_fitness);
                 println!("Best key: {:?}", best_key);
-                println!("Deciphered: {:?}", deciphered);
+                println!("Deciphered: {:?}\n", deciphered);
             }
         }
 
         temp -= DELTA_TEMP;
-        println!("Cooling: {:?}. Less fit children chosen: {}", temp, less_fit_count);
+        println!("Cooling to {:?}. Less fit children chosen: {}", temp, less_fit_count);
     }
 
 }
